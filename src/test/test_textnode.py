@@ -1,6 +1,6 @@
 import unittest
 
-from textnode import TextNode, TextType, text_node_to_html_node
+from textnode import TextNode, TextType, text_node_to_html_node, split_nodes_delimiter
 
 
 class TestTextNode(unittest.TestCase):
@@ -60,6 +60,105 @@ class TestTextNode(unittest.TestCase):
         html_node = text_node_to_html_node(node)
         self.assertEqual(html_node.tag, "img")
         self.assertEqual(html_node.value, "")
+
+    def test_parameterized_split_nodes(self):
+        test_cases = [
+            {
+                "desc": "Basic case with inline code block",
+                "input": [TextNode("Here is `a code block` in text.", TextType.TEXT)],
+                "delimiter": "`",
+                "text_type": TextType.CODE,
+                "expected": [
+                    TextNode("Here is ", TextType.TEXT),
+                    TextNode("a code block", TextType.CODE),
+                    TextNode(" in text.", TextType.TEXT),
+                ],
+            },
+            {
+                "desc": "Bold text with ** delimiter",
+                "input": [TextNode("This has **bold text** in it", TextType.TEXT)],
+                "delimiter": "**",
+                "text_type": TextType.BOLD,
+                "expected": [
+                    TextNode("This has ", TextType.TEXT),
+                    TextNode("bold text", TextType.BOLD),
+                    TextNode(" in it", TextType.TEXT),
+                ],
+            },
+            {
+                "desc": "Italic text with _ delimiter",
+                "input": [TextNode("This has _italic text_ in it", TextType.TEXT)],
+                "delimiter": "_",
+                "text_type": TextType.ITALIC,
+                "expected": [
+                    TextNode("This has ", TextType.TEXT),
+                    TextNode("italic text", TextType.ITALIC),
+                    TextNode(" in it", TextType.TEXT),
+                ],
+            },
+            {
+                "desc": "Text starting with a delimiter",
+                "input": [TextNode("`Code block` at the beginning", TextType.TEXT)],
+                "delimiter": "`",
+                "text_type": TextType.CODE,
+                "expected": [
+                    TextNode("Code block", TextType.CODE),
+                    TextNode(" at the beginning", TextType.TEXT),
+                ],
+            },
+            {
+                "desc": "Text ending with a delimiter",
+                "input": [TextNode("Code block at the `ending`", TextType.TEXT)],
+                "delimiter": "`",
+                "text_type": TextType.CODE,
+                "expected": [
+                    TextNode("Code block at the ", TextType.TEXT),
+                    TextNode("ending", TextType.CODE),
+                ],
+            },
+            {
+                "desc": "Missing closing delimiter should raise an exception",
+                "input": [TextNode("Oops, this `doesn't close", TextType.TEXT)],
+                "delimiter": "`",
+                "text_type": TextType.CODE,
+                "expected": None,  # Expecting an exception
+            },
+            {
+                "desc": "multiple delimiter pairs",
+                "input": [
+                    TextNode(
+                        "Text with `code here` and `more code` in it.", TextType.TEXT
+                    )
+                ],
+                "delimiter": "`",
+                "text_type": TextType.CODE,
+                "expected": [
+                    TextNode("Text with ", TextType.TEXT),
+                    TextNode("code here", TextType.CODE),
+                    TextNode(" and ", TextType.TEXT),
+                    TextNode("more code", TextType.CODE),
+                    TextNode(" in it.", TextType.TEXT),
+                ],
+            },
+        ]
+        for case in test_cases:
+            with self.subTest(msg=case["desc"]):
+                try:
+                    result = split_nodes_delimiter(
+                        case["input"], case["delimiter"], case["text_type"]
+                    )
+                    # print(f"Test: {case['desc']}")
+                    # print(f"Expected: {[str(n.text) for n in case['expected']]}")
+                    # print(f"Got: {[str(n.text) for n in result]}")
+
+                    self.assertEqual(result, case["expected"])
+                except Exception as e:
+                    if case["expected"] is None:
+                        # print(f"Expected exception for: {case['desc']}")
+                        self.assertTrue(True)  # Test passes if exception is expected
+                    else:
+                        # print(f"Unexpected failure for: {case['desc']}")
+                        raise e  # Fail the test
 
 
 if __name__ == "__main__":

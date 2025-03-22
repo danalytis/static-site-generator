@@ -11,6 +11,25 @@ class TextType(Enum):
     IMAGE = "image"
 
 
+def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    new_nodes = []
+
+    for node in old_nodes:
+        parts = node.text.split(delimiter)
+
+        if len(parts) % 2 == 0:
+            raise Exception("Unmatched delimiter found.")
+
+        for i, part in enumerate(parts):
+            if part:  # Avoid adding empty strings
+                if i % 2 == 0:
+                    new_nodes.append(TextNode(part, node.text_type))  # Normal text
+                else:
+                    new_nodes.append(TextNode(part, text_type))  # Delimited text
+
+    return new_nodes
+
+
 def text_node_to_html_node(text_node):
     match text_node.text_type:
         case TextType.TEXT:
