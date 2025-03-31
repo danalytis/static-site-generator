@@ -1,6 +1,102 @@
 import unittest
 
-from textnode import TextNode, TextType, text_node_to_html_node, split_nodes_delimiter
+from textnode import (
+    TextNode,
+    TextType,
+    text_node_to_html_node,
+    split_nodes_delimiter,
+    extract_markdown_images,
+    extract_markdown_links,
+)
+
+
+class TestExtractMarkdown(unittest.TestCase):
+    def test_extract_markdown_images(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+    def test_extract_markdown_images_noteq(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertNotEqual([("image", "https://i.imgur.com/jcczJZK.png")], matches)
+
+    def test_extract_markdown_links(self):
+        matches = extract_markdown_links(
+            "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        )
+        self.assertEqual(
+            [
+                ("to boot dev", "https://www.boot.dev"),
+                ("to youtube", "https://www.youtube.com/@bootdotdev"),
+            ],
+            matches,
+        )
+
+    def test_extract_markdown_links_noteq(self):
+        matches = extract_markdown_links(
+            "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        )
+        self.assertNotEqual(
+            [("boot dev", "www.boot.dev"), ("youtube", "www.youtube.com/@notbootdev")],
+            matches,
+        )
+
+    def test_multiple_images(self):
+        matches = extract_markdown_images(
+            "Here are two images: ![first](https://example.com/1.png) and ![second](https://example.com/2.png)"
+        )
+        self.assertListEqual(
+            [
+                ("first", "https://example.com/1.png"),
+                ("second", "https://example.com/2.png"),
+            ],
+            matches,
+        )
+
+    def test_extract_markdown_images_empty(self):
+        text = "This is text with no images"
+        matches = extract_markdown_images(text)
+        self.assertListEqual([], matches)
+
+    def test_extract_markdown_images_special_chars(self):
+        text = "Image with special chars: ![image with spaces & symbols!](https://example.com/pic.jpg)"
+        matches = extract_markdown_images(text)
+        self.assertListEqual(
+            [("image with spaces & symbols!", "https://example.com/pic.jpg")], matches
+        )
+
+    def test_extract_markdown_links_special_chars(self):
+        text = "Link with special chars: [link with spaces & symbols!](https://example.com/page)"
+        matches = extract_markdown_links(text)
+        self.assertListEqual(
+            [("link with spaces & symbols!", "https://example.com/page")], matches
+        )
+
+    def test_extract_markdown_links_complex_urls(self):
+        text = "Link with query params: [complex link](https://example.com/search?q=python&sort=relevance#section1)"
+        matches = extract_markdown_links(text)
+        self.assertListEqual(
+            [
+                (
+                    "complex link",
+                    "https://example.com/search?q=python&sort=relevance#section1",
+                )
+            ],
+            matches,
+        )
+
+    def test_extract_markdown_images_ignores_links(self):
+        text = "Here's an image ![cat](https://example.com/cat.jpg) and a [regular link](https://example.com/page)"
+        matches = extract_markdown_images(text)
+        self.assertListEqual([("cat", "https://example.com/cat.jpg")], matches)
+
+    def test_extract_markdown_links_ignores_images(self):
+        text = "Here's an image ![cat](https://example.com/cat.jpg) and a [regular link](https://example.com/page)"
+        matches = extract_markdown_links(text)
+        self.assertListEqual([("regular link", "https://example.com/page")], matches)
 
 
 class TestTextNode(unittest.TestCase):

@@ -1,5 +1,16 @@
+import re
 from enum import Enum
 from htmlnode import LeafNode
+
+
+def extract_markdown_images(text):
+    results = re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
+    return results
+
+
+def extract_markdown_links(text):
+    results = re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
+    return results
 
 
 class TextType(Enum):
@@ -12,6 +23,16 @@ class TextType(Enum):
 
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    """
+    Split TextNodes by a specified delimiter and assign the appropriate text type.
+
+    old_nodes -- List of TextNode objects to process
+    delimiter -- The delimiter string to split on (e.g., "`", "**", "_")
+    text_type -- The TextType to assign to text between delimiters
+
+    Returns a new list of TextNode objects with appropriate text types.
+    Raises an exception if a matching closing delimiter
+    """
     new_nodes = []
 
     for node in old_nodes:
@@ -31,6 +52,11 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
 
 
 def text_node_to_html_node(text_node):
+    """TODO describe function
+    :param text_node:
+    :returns:
+
+    """
     match text_node.text_type:
         case TextType.TEXT:
             return LeafNode(None, text_node.text)
