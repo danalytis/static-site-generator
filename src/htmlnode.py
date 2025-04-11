@@ -2,11 +2,27 @@ class HTMLNode:
     def __init__(self, tag=None, value=None, children=None, props=None):
         self.tag = tag
         self.value = value
-        self.children = children
+        self.children = children if children is not None else []
         self.props = props if props else {}
 
     def to_html(self):
-        raise NotImplementedError
+        # Determine the opening tag, including attributes (props)
+        if self.tag:
+            # Add props to opening tag if they exist
+            props = " ".join(
+                f'{key}="{value}"' for key, value in (self.props or {}).items()
+            )
+            opening_tag = f"<{self.tag}" + (f" {props}" if props else "") + ">"
+        else:
+            opening_tag = ""
+
+        # The content of the node (value or child nodes)
+        value = self.value or ""
+        children_html = "".join([child.to_html() for child in (self.children or [])])
+
+        # Determine the closing tag
+        closing_tag = f"</{self.tag}>" if self.tag else ""
+        return f"{opening_tag}{value}{children_html}{closing_tag}"
 
     def props_to_html(self):
         results = ""

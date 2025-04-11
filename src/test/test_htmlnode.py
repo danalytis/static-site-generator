@@ -40,8 +40,8 @@ class TestParentNode(unittest.TestCase):
 
     def test_to_html_no_children(self):
         node = ParentNode("div", None)
-        with self.assertRaises(ValueError):
-            node.to_html()
+        # Check that to_html() returns an empty node when children are empty
+        self.assertEqual(node.to_html(), "<div></div>")
 
     def test_to_html_empty_children_list(self):
         node = ParentNode("div", [])

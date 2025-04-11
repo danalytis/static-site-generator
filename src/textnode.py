@@ -175,6 +175,7 @@ def text_node_to_html_node(text_node):
         case TextType.ITALIC:
             return LeafNode("i", text_node.text)
         case TextType.CODE:
+            # print(f"Text content received in TextNode: {repr(text_node.text)}")
             return LeafNode("code", text_node.text)
         case TextType.LINK:
             return LeafNode("a", text_node.text, {"href": text_node.url})
