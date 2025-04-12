@@ -24,7 +24,8 @@ def text_to_children(text):
     nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)  # For bold text
     nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)  # For italic text
     nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)  # For inline code
-
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
     # Convert each TextNode to an HTMLNode
     html_nodes = []
     for node in nodes:
