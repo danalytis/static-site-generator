@@ -20,9 +20,7 @@ def extract_title(markdown):
 
 
 def generate_page(from_path, template_path, dest_path, base_path):
-    """ """
-
-    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    print(f"DEBUG: Using base_path: {base_path}")
 
     with open(from_path) as md_fd:
         md = md_fd.read()
@@ -30,20 +28,16 @@ def generate_page(from_path, template_path, dest_path, base_path):
         template = template_fd.read()
 
     content = markdown_to_html_node(md).to_html()
-
-    # Apply basepath to content's links and images first
-    content = content.replace('href="/', f'href="{base_path}')
-    content = content.replace('src="/', f'src="{base_path}')
-
     title = extract_title(md)
 
-    # Replace content and title in template
+    # First replace the content and title
     html = template.replace("{{ Title }}", title)
     html = html.replace("{{ Content }}", content)
 
-    # Apply basepath to the entire HTML document (which will catch any links in the template)
-    html = html.replace('href="/', f'href="{base_path}')
-    html = html.replace('src="/', f'src="{base_path}')
+    # Then replace all instances of href="/ and src="/
+    if base_path != "/":  # Only modify paths if not at root
+        html = html.replace('href="/', f'href="{base_path}')
+        html = html.replace('src="/', f'src="{base_path}')
 
     dest_dir = os.path.dirname(dest_path)
     if dest_dir and not os.path.exists(dest_dir):
