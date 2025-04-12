@@ -30,20 +30,27 @@ def generate_page(from_path, template_path, dest_path, base_path):
         template = template_fd.read()
 
     content = markdown_to_html_node(md).to_html()
+
+    # Apply basepath to content's links and images first
+    content = content.replace('href="/', f'href="{base_path}')
+    content = content.replace('src="/', f'src="{base_path}')
+
     title = extract_title(md)
 
-    template = template.replace("{{ Title }}", title)
-    template = template.replace("{{ Content }}", content)
+    # Replace content and title in template
+    html = template.replace("{{ Title }}", title)
+    html = html.replace("{{ Content }}", content)
 
-    template = template.replace('href="/', f'href="{base_path}')
-    template = template.replace('src="/', f'src="{base_path}')
+    # Apply basepath to the entire HTML document (which will catch any links in the template)
+    html = html.replace('href="/', f'href="{base_path}')
+    html = html.replace('src="/', f'src="{base_path}')
 
     dest_dir = os.path.dirname(dest_path)
     if dest_dir and not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
 
     with open(dest_path, "w") as output_fd:
-        output_fd.write(template)
+        output_fd.write(html)
 
 
 def copytree(source, destination):
