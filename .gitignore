@@ -2,4 +2,3 @@ src/__pycache__/
 src/test/__pychache__/
 src/test/__init__.py
 src/*.pyc
-public/

@@ -2,6 +2,7 @@ import os
 import shutil
 from markdown import markdown_to_html_node
 from textnode import TextNode
+import sys
 
 
 def extract_title(markdown):
@@ -18,7 +19,7 @@ def extract_title(markdown):
     raise Exception("no h1 title found")
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, base_path):
     """ """
 
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
@@ -31,6 +32,8 @@ def generate_page(from_path, template_path, dest_path):
     content = markdown_to_html_node(md).to_html()
     title = extract_title(md)
 
+    template = template.replace('href="/', f'href="{base_path}')
+    template = template.replace('src="/', f'src="{base_path}')
     template = template.replace("{{ Title }}", title)
     template = template.replace("{{ Content }}", content)
 
@@ -61,10 +64,33 @@ def copytree(source, destination):
             copytree(source_item, destination_item)
 
 
+def process_md_file(root, file, content_dir, public_dir, template_path, base_path):
+
+    content_path = os.path.join(root, file)
+    rel_path = os.path.relpath(content_path, content_dir)
+
+    if file == "index.md":
+        rel_html_path = os.path.join(os.path.dirname(rel_path), "index.html")
+    else:
+        rel_html_path = rel_path.replace(".md", ".html")
+
+    dest_path = os.path.join(public_dir, rel_html_path)
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+
+    generate_page(content_path, template_path, dest_path, base_path)
+
+    print(f"Processed Markdown file {content_path} into {dest_path}")
+
+
 def main():
-    # paths
+
+    base_path = sys.argv[1] if len(sys.argv) > 1 else "/"
+    if not base_path.endswith("/"):
+        base_path += "/"
+
+    # path initialization
     current_dir = os.getcwd()
-    public_dir = os.path.join(current_dir, "public")
+    public_dir = os.path.join(current_dir, "docs")
     static_dir = os.path.join(current_dir, "static")
     content_dir = os.path.join(current_dir, "content")
     content_path = os.path.join(current_dir, "content/index.md")
@@ -72,37 +98,25 @@ def main():
     dest_path = os.path.join(public_dir, "index.html")
 
     if os.path.exists(public_dir):
+        print("Removing existing public directory...")
         shutil.rmtree(public_dir)
-    os.makedirs(public_dir)
+    else:
+        print("Public directory does not exist, skipping removal.")
+
+    try:
+        os.makedirs(public_dir)
+        print(f"Created public directory at: {public_dir}")
+    except Exception as e:
+        print(f"Failed to create public directory: {e}")
 
     copytree(static_dir, public_dir)
+
     for root, dirs, files in os.walk(content_dir):
         for file in files:
             if file.endswith(".md"):
-                # Get the content file path
-                content_path = os.path.join(root, file)
-
-                # Calculate the relative path from content_dir
-                rel_path = os.path.relpath(content_path, content_dir)
-
-                # Calculate the destination path in public
-                # Replace .md with .html and maintain directory structure
-                if file == "index.md":
-                    # For index.md files, keep the name as index.html
-                    rel_html_path = os.path.join(
-                        os.path.dirname(rel_path), "index.html"
-                    )
-                else:
-                    # For other md files, change extension to html
-                    rel_html_path = rel_path.replace(".md", ".html")
-
-                dest_path = os.path.join(public_dir, rel_html_path)
-
-                # Ensure the destination directory exists
-                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-
-                # Generate the HTML page
-                generate_page(content_path, template_path, dest_path)
+                process_md_file(
+                    root, file, content_dir, public_dir, template_path, base_path
+                )
 
 
 if __name__ == "__main__":
