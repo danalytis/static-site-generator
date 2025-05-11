@@ -121,16 +121,7 @@ def handle_ordered(block):
 
 def handle_quote(block):
     lines = block.split("\n")
-    content = "\n".join(
-        [
-            (
-                line[2:]
-                if line.startswith("> ")
-                else line[:1] if line.startswith(">") else line
-            )
-            for line in lines
-        ]
-    )
+    content = "\n".join(line.lstrip(">").lstrip() for line in lines)
 
     children = text_to_children(content)
 
